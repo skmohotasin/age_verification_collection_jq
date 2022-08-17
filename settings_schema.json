@@ -12,6 +12,22 @@
       },
       {
         "type": "header",
+        "content": "Checkout page"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_checkout_page_cookie",
+        "label": "Enable Checkout page cookie push",
+        "default": false,
+        "info": "This will push product ID information from a specific collection page to checkout page"
+      },
+      {
+        "type": "collection",
+        "id": "checkout_page_cookie_collection",
+        "label": "Collection page"
+      },
+      {
+        "type": "header",
         "content": "Popup Body"
       },
       {
