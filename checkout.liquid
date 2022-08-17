@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}" dir="{{ direction }}" class="{{ checkout_html_classes }}">
+  <head>
+   
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height, minimum-scale=1.0, user-scalable=0">
+    <meta name="referrer" content="origin">
+
+    <title>{{ page_title }}</title>
+    
+    {% include 'favicon' %}
+    
+    {{ content_for_header }}
+
+    {{ checkout_stylesheets }}
+    {{ checkout_scripts }}
+    
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css">
+    
+    <!-- ADDRESS VALIDATOR -->
+    <script async src="https://d3ox8tdk614ykk.cloudfront.net/pobox_checker.js"></script>
+    
+    {{ 'checkout.scss.css' | asset_url | stylesheet_tag }}
+    
+    <script src="{{ 'additional-script.js' | asset_url }}" type="text/javascript" defer="defer"></script>
+    
+    <!-- Address Right Code Start -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KHN5V73');</script>
+    <!-- End Google Tag Manager -->
+    
+    <script>
+      $(document).ready(function(){
+      	 $('<div class="autocomplete"></div>').insertAfter("#checkout_shipping_address_address1");
+         $('#checkout_shipping_address_address1').keyup(function(){
+			var address1 = $(this).val();
+			$.ajax({
+			  url: 'https://akinaserver.com/printer/shiphero/addressright/autocomplete.php',
+			  type: 'POST',
+			  data: 'address1='+address1,
+			  success: function(data) {
+				if(data !=''){
+					$('.autocomplete').html(data);
+				}
+			  },
+			  error: function(e) {
+				console.log(e.message);
+			  }
+			});
+		});
+        
+        $(document).on('click','.chooseaddress', function(e){
+			var attrID = $(this).attr('id');
+			$.ajax({
+			  url: 'https://akinaserver.com/printer/shiphero/addressright/autocomplete.php',
+			  type: 'POST',
+			  data: 'attrID='+attrID,
+			  success: function(data) {	
+                console.log(data);
+				if(data !=''){
+					var splitvalue = data.split("&");
+					var address_1 = splitvalue[0];
+					var address_2 = splitvalue[1];
+                	if(address_2 == ''){
+                      var address_2 = splitvalue[2];
+                  	}
+					var city = splitvalue[2];
+					var zip = splitvalue[3];
+                    var region = splitvalue[4];
+                  	//console.log(region);
+					$('#checkout_shipping_address_address1').val(address_1);
+					$('#checkout_shipping_address_address2').val(address_2);
+					$('#checkout_shipping_address_city').val(city);
+					$('#checkout_shipping_address_province').val(region);
+                    $('#checkout_shipping_address_province option:contains("'+region+'")').prop('selected', true); 
+                  
+					$('#checkout_shipping_address_zip').val(zip);
+					$('.mainul').css('display', 'none');
+				}
+			  },
+			  error: function(e) {
+				console.log(e.message);
+			  }
+			});
+		});
+        $(document).on('click','.manuallyaddress span', function(e){
+        	$('.autocomplete').hide();
+            $('#checkout_shipping_address_address1').val('');
+            $('#checkout_shipping_address_address2').val('');
+            $('#checkout_shipping_address_city').val('');
+            $('#checkout_shipping_address_province').val('');
+            $('#checkout_shipping_address_zip').val(''); 
+        });
+      });
+    </script>
+    <!-- Address Right Code End -->
+    
+     {% if settings.enable_checkout_page_cookie %}
+      <script type="application/json" 
+              id="checkoutcheckoutProduct"> {
+              "ckeckoutpage":
+                 { 
+                   "product_id": [
+                     {% for line_item in checkout.line_items %}
+                     {{ line_item.product_id | json }}{% unless forloop.last %},{% endunless %}
+                     {% endfor %}
+                     ]
+                 }
+        }
+       </script>
+      {% endif %}
+    
+    {% assign disable_afterpay_and_laybuy = false %}
+    {% for line_item in checkout.line_items %}
+   	 {% for line_item_tag in line_item.product.tags %}
+    	{% if line_item_tag contains 'R18' %}
+         {% assign disable_afterpay_and_laybuy = true %}
+    	{% endif %}
+     {% endfor %}
+    {% endfor %}
+    
+    {% render 'tiktok_pixel_checkout_header_code' %}
+    {% render 'bambuser-integration-checkout' %}
+  </head>
+  <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KHN5V73" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	<!-- End Google Tag Manager (noscript) -->
+    
+    {{ skip_to_content_link }}
+
+    <header class="banner" data-header role="banner">
+      <div class="wrap">
+        {{ content_for_logo }}
+      </div>
+    </header>
+
+    {{ order_summary_toggle }}
+    <div class="content" data-content>
+      <div class="wrap">
+        <div class="main">
+          <header class="main__header" role="banner">
+            {{ content_for_logo }}
+            {{ breadcrumb }}
+            {{ alternative_payment_methods }}
+          </header>
+          <main class="main__content" role="main">
+            {{ content_for_layout }}
+            {% section 'checkout-footer' %}
+          </main>
+          <footer class="main__footer" role="contentinfo">
+            {{ content_for_footer }}
+          </footer>
+        </div>
+        <aside class="sidebar" role="complementary">
+          <div class="sidebar__header">
+            {{ content_for_logo }}
+          </div>
+          <div class="sidebar__content">
+            {{ content_for_order_summary }}
+            {% unless disable_afterpay_and_laybuy %}
+              {% section 'checkout-payment-icon' %}
+              {% section 'aftperpay-and-laybuy-checkout' %}
+              {% section 'afterpay-checkout-circle' %}
+              {% section 'afterpay-checkout-circle-mobile-only' %}
+              {% section 'laybuy-checkout-circle' %}
+              {% section 'laybuy-checkout-circle-mobile-only' %}
+            {% endunless %}
+            {% comment %}For Credit Card{% endcomment %}
+            <div class="total-price-credit-card">
+              <div class="inline">
+                <p class="big right">Total</p><p class="left right">NZD </p><p class="big bold red right">{{ checkout.total_price | money }}</p><p class="bold left">Will be charged to the credit card below :</p>
+              </div>
+            </div>
+            <p class="section__text hide">Afterpay and Laybuy not available on liquor and vape products.</p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    {{ tracking_code }}
+    
+    {% if settings.enable_checkout_page_cookie %}
+      <script>
+        function getCookie(name) {
+          var nameEQ = name+ "=";
+          var ca = document.cookie.split(';');
+          for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+          }
+          return null;
+        }
+        if(getCookie('liquor_product_id') != null){
+          var caseTypeckeck = false;
+          var collectionProductIDs = getCookie('product_id').split(',');
+          var collectionLiquorProductIDs = getCookie('liquor_product_id').split(',');
+          var checkoutProductIDs = JSON.parse(document.getElementById('checkoutcheckoutProduct').innerHTML).ckeckoutpage.product_id;
+          checkoutProductIDs.map(function(id){
+            var caseType = collectionProductIDs.includes(id.toString());
+            if(caseType){
+              caseTypeckeck = caseType;
+            }
+          });
+          checkoutProductIDs.map(function(id){
+            var caseType = collectionLiquorProductIDs.includes(id.toString());
+            if(caseType){
+              caseTypeckeck = caseType;
+            }
+          });
+          if(caseTypeckeck){
+            var GatewayOne = Checkout.$('[data-select-gateway="155484165"]').length;
+            var GatewayTwo = Checkout.$('[data-select-gateway="126111173"]').length;
+            var GatewayThree = Checkout.$('[data-select-gateway="64689733821"]').length;
+            var AfterpayAndLaybuy = Checkout.$(".shopify-section.afterpay-and-laybuy").length;
+            if(AfterpayAndLaybuy > 0){document.querySelector(".shopify-section.afterpay-and-laybuy").style.display = "none";}
+            window.onload = function() {
+              if(Shopify.Checkout.step === 'payment_method') {  
+                if(GatewayOne > 0) {
+                  document.querySelector('[data-select-gateway="155484165"]').style.display = "none";
+                }
+                if(GatewayTwo > 0) {
+                  document.querySelector('[data-select-gateway="126111173"]').style.display = "none";
+                }
+                if(GatewayThree > 0) {
+                  document.querySelector('[data-select-gateway="64689733821"]').style.display = "none";
+                }
+              }
+            };
+          }
+        }
+        
+      </script>
+    {% endif %}
+  </body>
+</html>
