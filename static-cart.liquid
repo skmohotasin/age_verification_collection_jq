@@ -1,0 +1,859 @@
+{% assign is_customer = false %}
+{% if shop.customer_accounts_enabled and customer %}
+  {% assign is_customer = true %}
+{% endif %}
+
+{% assign RunCartPriceScript = false %}
+{% assign has_sidebar = false %}
+{% assign has_items = false %}
+{% assign show_continue_link = false %}
+{% assign age_verification = false %}
+{% assign has_rrp_sale_item = false %}
+{% assign product_arrive_tag_label_show = false %}
+{% assign product_arrive_tag_label_date = "" %}
+{% assign data_set_tag_value_table = false %}
+{% assign data_set_tag_value_table_2 = false %}
+{% assign data_set_tag_value_table_3 = false %}
+
+{% if settings.age_verification_extracttags != blank %}
+  {% assign age_verification_extracttags = settings.age_verification_extracttags %}
+{% else %}
+  {% assign age_verification_extracttags = 'blank_tag' %}
+{% endif %}
+
+{% if settings.assigned_product_vendor != blank %}
+  {% assign assigned_product_vendor = settings.assigned_product_vendor %}
+  {% assign assigned_product_vendor_text = settings.assigned_product_vendor_text %}
+{% else %}
+  {% assign assigned_product_vendor = 'blank_tag' %}
+  {% assign assigned_product_vendor_text = 'blank_tag' %}
+{% endif %}
+
+{% if section.settings.data_set_tag_value != blank %}
+	{% assign data_set_tag_value = section.settings.data_set_tag_value %}
+{% else %}
+	{% assign data_set_tag_value = "" %}
+{% endif %}
+
+{% if section.settings.data_set_tag_value_2 != blank %}
+	{% assign data_set_tag_value_2 = section.settings.data_set_tag_value_2 %}
+{% else %}
+	{% assign data_set_tag_value_2 = "" %}
+{% endif %}
+
+{% if section.settings.data_set_tag_value_3 != blank %}
+	{% assign data_set_tag_value_3 = section.settings.data_set_tag_value_3 %}
+{% else %}
+	{% assign data_set_tag_value_3 = "" %}
+{% endif %}
+
+{% if section.blocks.size > 0 %}
+  {% assign has_sidebar = true %}
+{% endif %}
+
+{% for item in cart.items %}
+	{% if item.product.tags contains 'rrp sale' and item.product.compare_at_price > item.product.price %}
+		{% assign temp_price =  item.product.price | times: item.quantity | plus: temp_price %}
+        {% assign temp_compare_at_price =  item.product.compare_at_price | times: item.quantity | plus: temp_compare_at_price %}
+		{% assign total_compare_rate_price = cart.original_total_price | minus: temp_price | plus: temp_compare_at_price %}
+		{% assign has_rrp_sale_item = true %}
+	{% endif %}
+
+	{% if item.product.tags contains data_set_tag_value %}
+		{% assign data_set_tag_value_table = true %}
+    {% endif %}
+	{% if item.product.tags contains data_set_tag_value_2 %}
+		{% assign data_set_tag_value_table_2 = true %}
+    {% endif %}
+	{% if item.product.tags contains data_set_tag_value_3 %}
+		{% assign data_set_tag_value_table_3 = true %}
+    {% endif %}
+{% endfor %}
+
+
+{% if cart.items.size > 0 %}
+  {% assign has_items = true %}
+{% endif %}
+
+{% assign continue_url = "/collections/all" %}
+{% if settings.continue_shopping_url != blank %}
+  {% assign continue_url = settings.continue_shopping_url %}
+{% endif %}
+
+{% if settings.continue_url_cart %}
+  {% assign show_continue_link = true %}
+  {%- capture continue_link_html -%}
+    <a class="cart-continue" href="{{ continue_url }}">
+      {{ 'cart.general.continue_shopping' | t }}
+      {% include 'icon-library', id: 'icon-chevron-down-small' %}
+    </a>
+  {%- endcapture -%}
+{% endif %}
+<script
+  type="application/json"
+  data-section-type="static-cart"
+  data-section-id="{{ section.id }}"
+  data-section-data>
+  {
+    "cart": {{ cart | json }},
+    "settings": {
+      "shipping": {{ section.settings.enable_shipping_calc | json }},
+      "stock_limit": {{ 'cart.general.stock_limit' | t: quantity: '** quantity **', title: '** title **' | json }},
+      "money_format": {{ shop.money_format | strip_html | json }}
+    },
+    "shipping": {
+      "calculate_shipping": {{ 'cart.shipping.calculate_shipping' | t | json }},
+      "calculating": {{ 'cart.shipping.calculating' | t | json }},
+      "customer": {{ is_customer | default: false | json }},
+      "multiple_rates": {{ 'cart.shipping.multiple_rates' | t: number_of_rates: '*number_of_rates*', address: '*address*', rate: '*rate*' | json }},
+      "one_rate": {{ 'cart.shipping.one_rate' | t: address: '*address*' | json }},
+      "no_rates": {{ 'cart.shipping.no_rates' | t | json }},
+      "rate_value": {{ 'cart.shipping.rate_value' | t: rate_title: '*rate_title*', rate: '*rate*'  | json }},
+      "zip": {{ 'cart.shipping.zip' | t | json }},
+      "shipment_too_heavy": {{ 'cart.shipping.shipment_too_heavy' | t | json }},
+      "error_general": {{ 'cart.shipping.error_general' | t | json }}
+    }
+  }
+</script>
+
+<form
+  class="cart {% if has_sidebar and cart.total_price > 0 %}has-sidebar{% endif %}"
+  action="{{ routes.cart_url }}"
+  method="post"
+  aria-label="cart checkout"
+  data-cart-form
+>
+  {% if section.settings.show_shipping_condition and has_items %}
+  	{% render 'shipping-condition'%}
+  {% endif %}
+  <div class="saso-cart-offers"></div>
+  <header class="cart-title">
+    <div class="cart-title-left">
+      <h1>{{ 'cart.general.your_cart' | t }}</h1>
+
+      {% if has_items %}
+        <div class="cart-title-total--small"></div>
+      {% endif %}
+    </div>
+
+    {% if has_items or show_continue_link %}
+      <div class="cart-title-right">
+        {% if has_items %}
+          <div class="cart-title-total--large">
+            <div class="cart-title-total" data-cart-title-total>
+			  {{ product.title }} {{ item.title }}
+              {% if has_rrp_sale_item %}<p>{{ 'cart.general.subtotal' | t }}</p>{% else %}{{ 'cart.general.subtotal' | t }}{% endif %}
+              <span class="saso-cart-original-total">
+                {% if total_compare_rate_price > cart.original_total_price %}
+                <span class="money original-total" data-cart-original-total="{{ total_compare_rate_price }}">
+                  {{ total_compare_rate_price | money }}
+                </span>
+                {% elsif cart.original_total_price > cart.total_price %}
+                <span class="money original-total" data-cart-original-total="{{ cart.original_total_price }}">
+                  {{ cart.original_total_price | money }}
+                </span>
+                {% endif %}
+                <span class="money{% if has_rrp_sale_item %} total{% endif %}" data-cart-total="{{ cart.total_price }}">
+                  {{ cart.total_price | money }}
+                </span>
+              </span>
+              <span class="saso-cart-total"></span>
+              <div class="money total-amount-save">{% if has_rrp_sale_item %}{{ 'cart.general.discounted_amount' | t }} {{ total_compare_rate_price | minus: cart.original_total_price | money }}{% endif %}</div>
+            </div>
+          </div>
+
+          <button
+            class="button-secondary cart-title-button"
+            name="checkout"
+            type="submit"
+            aria-label="{{ 'cart.general.checkout' | t }}"
+          >
+            {% if settings.enable_checkout_lock_icon %}
+              {% include 'icon-library', id: 'icon-checkout-lock' %}
+            {% else %}
+              {% include 'icon-library', id: 'icon-cart' %}
+            {% endif %}
+            {{ 'cart.general.checkout' | t }}
+          </button>
+        {% elsif show_continue_link %}
+          {{ continue_link_html }}
+        {% endif %}
+      </div>
+    {% endif %}
+  </header>
+
+  <section
+    class="cartitems--container {% if has_sidebar and cart.total_price > 0 %}has-sidebar{% endif %}">
+    <div class="cartitems">
+     
+      {% if has_items %}
+      
+         {% if data_set_tag_value_table %}
+			{% assign show_title = 1 %} 
+              {% for item in cart.items %}
+                 {% for tag in item.product.tags %}
+
+                    {% if tag contains 'arrive_' %}
+                        {% assign product_arrive_tag_label_value = tag | replace: "_"," " | remove: "arrive" %}
+                    {% endif %}
+
+                    {% if product_arrive_tag_label_value contains item.sku %}
+                        {% assign product_arrive_tag_label_show = true %}
+                        {% assign product_arrive_tag_label_date = product_arrive_tag_label_value | remove: item.sku %}
+                    {% endif %}
+
+                    {% if tag contains age_verification_extracttags %}
+                      {% assign age_verification = true %}
+                    {% endif %}
+      
+                 {% endfor %}
+				
+                {% if item.product.tags contains data_set_tag_value %}
+                  {% assign data_set_tag_value_table = true %}
+                {% else %}
+                  {% assign data_set_tag_value_table = false %}
+                {% endif %}
+      
+                {% if data_set_tag_value_table %}
+                  {% if show_title == 1 %}
+                    {% assign show_title = 1 | plus: 1 %}
+                   <ul class="cartitems--list {% if settings.enable_product_card_spacing == false %}cartitems--no-spacing{% endif %}">
+                    <li class="cart-table-title">
+                      <div class="cart-table--inner">
+                          <span class="cart-item--content-title">{{ section.settings.data_set_tag_title | escape }}</span>
+                          <span class="cart-item--content-note">{{ section.settings.data_set_tag_note | escape }}</span>
+                      </div>
+                    </li>
+                  {% endif %}
+                  {%
+                    include 'cart-item',
+                    item: item,
+                    product_arrive_tag_label_show: product_arrive_tag_label_show,
+                    product_arrive_tag_label_date:product_arrive_tag_label_date,
+                    assigned_product_vendor:assigned_product_vendor,
+                    assigned_product_vendor_text:assigned_product_vendor_text,
+                  %}
+                    {% for product in collections[settings.age_verification_collection].products %}
+                        {% if item.product.handle == product.handle %}
+                            {% assign age_verification = true %}
+                        {% endif %}
+                    {% endfor %}
+
+                  {% endif %}
+                {% if forloop.last %}
+                </ul>
+                {% endif %}       
+              {% endfor %} 
+			{% endif %}
+      		
+      	{% if data_set_tag_value_table_2 %}
+			{% assign show_title = 1 %} 
+              {% for item in cart.items %}
+                 {% for tag in item.product.tags %}
+
+                    {% if tag contains 'arrive_' %}
+                        {% assign product_arrive_tag_label_value = tag | replace: "_"," " | remove: "arrive" %}
+                    {% endif %}
+
+                    {% if product_arrive_tag_label_value contains item.sku %}
+                        {% assign product_arrive_tag_label_show = true %}
+                        {% assign product_arrive_tag_label_date = product_arrive_tag_label_value | remove: item.sku %}
+                    {% endif %}
+
+                    {% if tag contains age_verification_extracttags %}
+                      {% assign age_verification = true %}
+                    {% endif %}
+
+                 {% endfor %}
+
+                {% if item.product.tags contains data_set_tag_value_2 %}
+                  {% assign data_set_tag_value_table_2 = true %}
+                {% else %}
+                  {% assign data_set_tag_value_table_2 = false %}
+                {% endif %}
+      
+                {% if data_set_tag_value_table_2 %}
+                  {% if show_title == 1 %}
+                    {% assign show_title = 1 | plus: 1 %}
+                   <ul class="cartitems--list {% if settings.enable_product_card_spacing == false %}cartitems--no-spacing{% endif %}">
+                    <li class="cart-table-title">
+                      <div class="cart-table--inner">
+                          <span class="cart-item--content-title">{{ section.settings.data_set_tag_title_2 | escape }}</span>
+                          <span class="cart-item--content-note">{{ section.settings.data_set_tag_note_2 | escape }}</span>
+                      </div>
+                    </li>
+                  {% endif %}
+                  {%
+                    include 'cart-item',
+                    item: item,
+                    product_arrive_tag_label_show: product_arrive_tag_label_show,
+                    product_arrive_tag_label_date:product_arrive_tag_label_date,
+                    assigned_product_vendor:assigned_product_vendor,
+                    assigned_product_vendor_text:assigned_product_vendor_text,
+                  %}
+                    {% for product in collections[settings.age_verification_collection].products %}
+                        {% if item.product.handle == product.handle %}
+                            {% assign age_verification = true %}
+                        {% endif %}
+                    {% endfor %}
+
+                  {% endif %}
+                {% if forloop.last %}
+                </ul>
+                {% endif %}       
+              {% endfor %} 
+			{% endif %}
+      
+      {% if data_set_tag_value_table_3 %}
+			{% assign show_title = 1 %} 
+              {% for item in cart.items %}
+                 {% for tag in item.product.tags %}
+
+                    {% if tag contains 'arrive_' %}
+                        {% assign product_arrive_tag_label_value = tag | replace: "_"," " | remove: "arrive" %}
+                    {% endif %}
+
+                    {% if product_arrive_tag_label_value contains item.sku %}
+                        {% assign product_arrive_tag_label_show = true %}
+                        {% assign product_arrive_tag_label_date = product_arrive_tag_label_value | remove: item.sku %}
+                    {% endif %}
+
+                    {% if tag contains age_verification_extracttags %}
+                      {% assign age_verification = true %}
+                    {% endif %}
+
+                 {% endfor %}
+
+                {% if item.product.tags contains data_set_tag_value_3 %}
+                  {% assign data_set_tag_value_table_3 = true %}
+                {% else %}
+                  {% assign data_set_tag_value_table_3 = false %}
+                {% endif %}
+      			
+                {% if data_set_tag_value_table_3 %}
+                  {% if show_title == 1 %}
+                    {% assign show_title = 1 | plus: 1 %}
+                   <ul class="cartitems--list {% if settings.enable_product_card_spacing == false %}cartitems--no-spacing{% endif %}">
+                    <li class="cart-table-title">
+                      <div class="cart-table--inner">
+                          <span class="cart-item--content-title">{{ section.settings.data_set_tag_title_3 | escape }}</span>
+                          <span class="cart-item--content-note">{{ section.settings.data_set_tag_note_3 | escape }}</span>
+                      </div>
+                    </li>
+                  {% endif %}
+                  {%
+                    include 'cart-item',
+                    item: item,
+                    product_arrive_tag_label_show: product_arrive_tag_label_show,
+                    product_arrive_tag_label_date:product_arrive_tag_label_date,
+                    assigned_product_vendor:assigned_product_vendor,
+                    assigned_product_vendor_text:assigned_product_vendor_text,
+                  %}
+                    {% for product in collections[settings.age_verification_collection].products %}
+                        {% if item.product.handle == product.handle %}
+                            {% assign age_verification = true %}
+                        {% endif %}
+                    {% endfor %}
+
+                  {% endif %}
+                {% if forloop.last %}
+                </ul>
+                {% endif %}       
+              {% endfor %} 
+			{% endif %}
+      
+      
+			{% assign show_title = 1 %} 
+            {% for item in cart.items %}            
+               {% for tag in item.product.tags %}
+
+                  {% if tag contains 'arrive_' %}
+                      {% assign product_arrive_tag_label_value = tag | replace: "_"," " | remove: "arrive" %}
+                  {% endif %}
+
+                  {% if product_arrive_tag_label_value contains item.sku %}
+                      {% assign product_arrive_tag_label_show = true %}
+                      {% assign product_arrive_tag_label_date = product_arrive_tag_label_value | remove: item.sku %}
+                  {% endif %}
+
+                  {% if tag contains age_verification_extracttags %}
+                    {% assign age_verification = true %}
+                  {% endif %}
+      
+               {% endfor %}
+
+              {% if item.product.tags contains data_set_tag_value %}
+                {% assign data_set_tag_value_table = true %}
+              {% else %}
+                {% assign data_set_tag_value_table = false %}
+              {% endif %}
+
+              {% if item.product.tags contains data_set_tag_value_2 %}
+                {% assign data_set_tag_value_table_2 = true %}
+              {% else %}
+                {% assign data_set_tag_value_table_2 = false %}
+              {% endif %}
+      
+      		  {% if item.product.tags contains data_set_tag_value_3 %}
+                {% assign data_set_tag_value_table_3 = true %}
+              {% else %}
+                {% assign data_set_tag_value_table_3 = false %}
+              {% endif %}
+      
+             {% unless data_set_tag_value_table or data_set_tag_value_table_2 or data_set_tag_value_table_3 %}
+              {% if show_title == 1 %}
+              	{% assign show_title = 1 | plus: 1 %}
+               <ul class="cartitems--list {% if settings.enable_product_card_spacing == false %}cartitems--no-spacing{% endif %}">
+                <li class="cart-table-title">
+                  <div class="cart-table--inner">
+                      <span class="cart-item--content-title">{{ 'cart.general.table_title' | t }}</span>
+                      <span class="cart-item--content-note">{{ 'cart.general.table_note' | t }}</span>
+                  </div>
+                </li>
+              {% endif %}
+              
+              {%
+                include 'cart-item',
+                item: item,
+                product_arrive_tag_label_show: product_arrive_tag_label_show,
+                product_arrive_tag_label_date:product_arrive_tag_label_date,
+                assigned_product_vendor:assigned_product_vendor,
+                assigned_product_vendor_text:assigned_product_vendor_text,
+              %}
+                {% for product in collections[settings.age_verification_collection].products %}
+                    {% if item.product.handle == product.handle %}
+                        {% assign age_verification = true %}
+                    {% endif %}
+                {% endfor %}
+              {% endunless %}
+                 
+               {% if forloop.last %}
+                 </ul>
+               {% endif %}
+                 
+            {% endfor %}  
+                 
+        <div class="cart-total" data-cart-totals>
+          <div class="cart-subtotal">
+            <span {% if has_rrp_sale_item %}class="discounted"{% endif %} aria-live="polite">{{ 'cart.general.subtotal' | t }}</span>
+             <span class="saso-cart-total money"></span>
+             <span class="saso-cart-original-total">
+               <span class="money{% if has_rrp_sale_item %} total{% endif %}" aria-live="polite" data-cart-total>{{ cart.total_price | money }}</span>
+             </span>
+             {% if total_compare_rate_price > cart.original_total_price %}
+             <span class="money original-total" aria-live="polite" data-cart-original-total>{{ total_compare_rate_price | money }}</span>
+             {% elsif cart.original_total_price > cart.total_price %}
+             <span class="money original-total" aria-live="polite" data-cart-original-total>{{ cart.original_total_price | money }}</span>
+             {% endif %}
+          </div>
+          <div class="money total-amount-save-main">{% if has_rrp_sale_item %}{{ 'cart.general.discounted_amount' | t }} {{ total_compare_rate_price | minus: cart.original_total_price | money }}{% endif %}</div>
+        </div>
+        <div class="saso-summary" data-cart-app-discounted-price></div>
+        <div class="rte cart-notifications" data-cart-notifications></div>
+        <div class="rte cart-tools" data-cart-tools></div>
+        
+       {% if settings.enable_age_verification_checkbox and age_verification %}
+        <div class="rte cart-age-varification-title">
+          <span class="text">{{ 'cart.general.age_verification_title' | t }}</span>
+        </div>
+        <div class="rte cart-age-varification" data-age-varification>
+          <input type="checkbox" id="age-verification">
+          <label>{{ 'cart.general.age_verification_text' | t }}</label>
+        </div>
+        {% endif %}
+
+        <div class="cart-shipping">
+          {% if cart.requires_shipping %}
+            {{ 'cart.general.shipping_at_checkout' | t }}
+          {% else %}
+            {{ 'cart.general.taxes_at_checkout' | t }}
+          {% endif %}
+
+          {% comment %}
+            snippets/cart-shipping.liquid has an internal check to see if shipping is required
+          {% endcomment %}
+          {% if section.settings.enable_shipping_calc %}
+            {% include 'cart-shipping' %}
+          {% endif %}
+        </div>
+
+        <div class="cart-checkout">
+          <button
+            class="button-secondary"
+            type="submit"
+            name="checkout"
+            aria-label="{{ 'cart.general.checkout' | t }}"
+          >
+            {% if settings.enable_checkout_lock_icon %}
+              {% include 'icon-library', id: 'icon-checkout-lock' %}
+            {% else %}
+              {% include 'icon-library', id: 'icon-cart' %}
+            {% endif %}
+            {{ 'cart.general.checkout' | t }}
+          </button>
+
+          {% if additional_checkout_buttons and section.settings.show_dcb %}
+            <div class="additional-checkout-buttons">
+              {{ content_for_additional_checkout_buttons }}
+            </div>
+          {% endif %}
+
+          {% if show_continue_link %}
+            {{ continue_link_html }}
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="cartitems-empty">
+          <div class="cartitems-empty--inner">
+            <p>{{ 'cart.general.cart_empty' | t }}</p>
+
+            {% if show_continue_link %}
+              <a class="button-primary" href="{{ continue_url }}">
+                {% include 'icon-library', id: 'icon-cart' %}
+                {{ 'cart.general.continue_shopping' | t }}
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if section.settings.enable_order_notes and has_items %}
+      <div class="cart-ordernote">
+        <span class="cart-ordernote-heading">{{ 'cart.general.enter_order_note' | t }}</span>
+        <div class="form-field">
+          <textarea class="form-field-input form-field-textarea" name="note" id="cart-note">{{ cart.note }}</textarea>
+          <label class="form-field-title" for="cart-note">{{ 'cart.general.special_instructions' | t }}</label>
+        </div>
+      </div>
+      {% endif %}
+      
+    </div>
+
+    {% if has_sidebar and cart.total_price > 0 %}
+      <div class="cart-sidebar">
+        {% for block in section.blocks %}
+          {% if block.type == 'image' %}
+            {% assign image = block.settings.image %}
+
+            <article class="cart-sidebar-item">
+              {% if image %}
+                {%
+                  include 'rimg',
+                  img: image,
+                  class: 'cart-sidebar-item-image',
+                  size: '445x',
+                  lazy: settings.lazy_load,
+                  canvas: settings.lazy_load
+                %}
+              {% else %}
+                {{ 'image' | placeholder_svg_tag: 'placeholder--image cart-sidebar-item-image' }}
+              {% endif %}
+            </article>
+          {% endif %}
+
+          {% if block.type == 'richtext' %}
+            <article class="cart-sidebar-item cart-sidebar-item--text rte">
+              {{ block.settings.richtext }}
+            </article>
+          {% endif %}
+
+          {% if block.type == 'page' %}
+            <article class="cart-sidebar-item cart-sidebar-item--text rte">
+              {{ pages[block.settings.page].content }}
+            </article>
+          {% endif %}
+          {% if block.type == 'content' %}
+        	{% assign RunCartPriceScript = true %}
+            <article class="cart-sidebar-item cart-sidebar-item--text rte">
+               {% if block.settings.title != blank %}
+              	<div class="text">{{ block.settings.title }}</div>
+               {% endif %}
+               {% unless age_verification %}
+                 <div class="product-afterpay-laybuy-pricing">
+                   {% if block.settings.show_after_pay_price %}
+                   {% render 'afterpay-product-page' Showcart: true, price: cart.total_price %}
+                   {% endif %}
+                   {% if block.settings.show_zip_price %}
+                   {% render 'zip-widget' Showcart: true, price: cart.total_price %}
+                   {% endif %}
+                   {% if block.settings.show_laybuy_price %}
+                   {% render 'laybuy-product-page' Showcart: true, price: cart.total_price %}
+                   {% endif %}
+                   {% if block.settings.show_humm_price %}
+                   {% render 'humm-product-page' Showcart: true, price: cart.total_price %}
+                   {% endif %}
+                   {% if block.settings.show_genoapay_price %}
+                   {% render 'genoapay-product-page' Showcart: true, price: cart.total_price %}
+                   {% endif %}
+                 </div>
+               {% endunless %}
+               {% if block.settings.payment_gateway and shop.enabled_payment_types.size > 0 %}
+                  <ul class="payment-icons">
+                    {% for type in shop.enabled_payment_types %}
+                      <li class="payment-icons-item">
+                        {{ type | payment_type_svg_tag }}
+                      </li>
+                    {% endfor %}
+                  </ul>
+        		{% endif %}
+            </article>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+</form>
+
+{% if RunCartPriceScript %}
+{{ 'cart-price-update.js' | asset_url | script_tag }}
+{% endif %}
+
+{% if age_verification and settings.enable_age_verification_checkbox %}
+{% render 'ageverification_cart' %}
+{% endif %}
+{% if settings.enable_checkout_page_cookie %}
+{% render 'cookie-push' %}
+{% endif %}
+{% schema %}
+{
+  "name": "Cart page",
+  "class": "cart--section",
+  "max_blocks": 2,
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_order_notes",
+      "label": "Enable order notes text box",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "rrp_sale_calculation_on",
+      "label": "Enable RRP item calculation enable",
+      "info": "This will enable products with 'rrp sale' tag to have changed price , compare rate price and in script to update laybuy, afterpay etc",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_dcb",
+      "label": "Show dynamic checkout button",
+      "info": "Customers will be shown their preferred payment method, based on their device, shopping history and the options you've enabled. [Learn more](https://help.shopify.com/manual/using-themes/change-the-layout/dynamic-checkout)",
+      "default": true
+    },
+    {
+      "type": "header",
+      "content": "Shipping estimator"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_shipping_calc",
+      "label": "Enable shipping estimator",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "shipping_calc_default_country",
+      "label": "Default country",
+      "default": "United States"
+    },
+	{
+      "type": "header",
+      "content": "Shipping condition"
+    },
+	{
+      "type": "checkbox",
+      "id": "show_shipping_condition",
+      "label": "Show Shipping condition",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "shipping_value",
+      "label": "Limit to appear message",
+      "info": "Like $30 = 30; $30 above purchase will make it active"
+    },
+    {
+      "type": "textarea",
+      "id": "condition_not_met",
+      "label": "If condition not met",
+      "info": "Like as : Spend <money> more for free shipping!"
+    },
+    {
+      "type": "textarea",
+      "id": "condition_met",
+      "label": "If condition met",
+      "info": "Like as : You've got free shipping!"
+    },
+    {
+      "id": "condition_font_size",
+      "type": "range",
+      "min": 12,
+      "max": 30,
+      "step": 1,
+      "unit": "px",
+      "label": "Font size",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "condition_text",
+      "label": "Text color",
+      "default": "#333"
+    },
+    {
+      "type": "color",
+      "id": "condition_bg",
+      "label": "Background Color",
+      "default": "#faebd4"
+    },
+	{
+      "type": "header",
+      "content": "Data set",
+	  "info": "Tag is used to isolate cart items"
+    },
+	{
+      "type": "text",
+      "id": "data_set_tag_value",
+      "label": "Tag word set (1)",
+      "info": "like as: pww-longtail"
+    },
+    {
+      "type": "textarea",
+      "id": "data_set_tag_title",
+      "label": "Title of the table set (1)",
+      "info": "Like as : Ships from our overseas supplier"
+    },
+    {
+      "type": "textarea",
+      "id": "data_set_tag_note",
+      "label": "note under the title set (1)",
+      "info": "Like as : Usually ships in 2-3 weeks"
+    },
+	{
+      "type": "text",
+      "id": "data_set_tag_value_2",
+      "label": "Tag word set (2)",
+      "info": "like as: harvest-box"
+    },
+    {
+      "type": "textarea",
+      "id": "data_set_tag_title_2",
+      "label": "Title of the table set (2)",
+      "info": "Like as : Ships only to urban Auckland areas"
+    },
+    {
+      "type": "textarea",
+      "id": "data_set_tag_note_2",
+      "label": "note under the title set (2)",
+      "info": "Like as : Usually ships in 2-3 weeks"
+    },
+	{
+      "type": "text",
+      "id": "data_set_tag_value_3",
+      "label": "Tag word set (3)",
+      "info": "like as: harvest-box"
+    },
+    {
+      "type": "textarea",
+      "id": "data_set_tag_title_3",
+      "label": "Title of the table set (3)",
+      "info": "Like as : Ships only to urban Auckland areas"
+    },
+    {
+      "type": "textarea",
+      "id": "data_set_tag_note_3",
+      "label": "note under the title set (3)",
+      "info": "Like as : Usually ships in 2-3 weeks"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "richtext",
+      "name": "Rich text",
+      "limit": 1,
+      "settings": [
+        {
+          "id": "richtext",
+          "type": "richtext",
+          "label": "Rich text",
+          "default": "<p>Use this section to welcome customers to your store, say a bit about your brand, or share news and seasonal promotions.</p>"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "name": "Image",
+      "limit": 1,
+      "settings": [
+        {
+          "id": "image",
+          "type": "image_picker",
+          "label": "Image"
+        }
+      ]
+    },
+    {
+      "type": "page",
+      "name": "Page",
+      "limit": 1,
+      "settings": [
+        {
+          "id": "page",
+          "type": "page",
+          "label": "Choose page"
+        }
+      ]
+    },
+	{
+      "type": "content",
+      "name": "Payment",
+      "limit": 1,
+      "settings": [
+		{
+          "id": "title",
+          "type": "richtext",
+          "label": "Rich text",
+          "default": "<p>Use this section to welcome customers to your store, say a bit about your brand, or share news and seasonal promotions.</p>"
+        },
+		{
+          "type": "checkbox",
+          "id": "show_after_pay_price",
+          "label": "Show Afterpay price",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "show_laybuy_price",
+          "label": "Show Laybuy price",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "show_genoapay_price",
+          "label": "Show Genoapay price",
+          "default": true
+        },
+		{
+          "type": "checkbox",
+          "id": "show_zip_price",
+          "label": "Show Zip price",
+          "default": true
+        },
+        {
+          "type": "checkbox",
+          "id": "show_humm_price",
+          "label": "Show Humm price",
+          "default": true
+        },
+        {
+          "id": "payment_gateway",
+          "type": "checkbox",
+          "label": "Show Payment gateway",
+		  "default": true
+        }
+      ]
+    }
+  ]
+}
+
+{% endschema %}
