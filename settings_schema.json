@@ -1,0 +1,161 @@
+  {
+    "name": "Age Verification",
+    "settings": [
+      {
+        "type": "header",
+        "content": "Where to appear"
+      },
+      {
+        "type": "collection",
+        "id": "age_verification_collection",
+        "label": "Collection page"
+      },
+      {
+        "type": "header",
+        "content": "Popup Body"
+      },
+      {
+        "type": "checkbox",
+        "id": "enable_age_verification",
+        "label": "Enable age verification",
+        "default": false
+      },
+      {
+        "type": "range",
+        "id": "age_verification_delay",
+        "label": "Delay until popup appears",
+        "min": 0,
+        "max": 30,
+        "step": 5,
+        "unit": "sec",
+        "default": 5
+      },
+      {
+        "type": "select",
+        "id": "age_verification_return",
+        "label": "Amount of time before the popup re-appears for the user",
+        "options": [
+          {
+            "value": "0",
+            "label": "Everytime"
+          },
+          {
+            "value": "1",
+            "label": "Per Day"
+          },
+          {
+            "value": "7",
+            "label": "1 week"
+          },
+          {
+            "value": "14",
+            "label": "2 weeks"
+          },
+          {
+            "value": "30",
+            "label": "1 month"
+          },
+          {
+            "value": "60",
+            "label": "2 months"
+          },
+          {
+            "value": "90",
+            "label": "3 months"
+          }
+        ],
+        "default": "7"
+      },
+      {
+        "type": "text",
+        "id": "age_verification_title",
+        "label": "Title",
+        "default": "Title"
+      },
+      {
+        "type": "richtext",
+        "id": "age_verification_body",
+        "label": "Body",
+        "default": "<p>body<\/p>"
+      },
+      {
+        "type": "header",
+        "content": "Body If No"
+      },
+      {
+        "type": "text",
+        "id": "age_verification_no_title",
+        "label": "Title",
+        "default": "Title"
+      },
+      {
+        "type": "richtext",
+        "id": "age_verification_no_body",
+        "label": "Body",
+        "default": "<p>body<\/p>"
+      },
+      {
+        "type": "url",
+        "id": "age_verification_no_btn_link",
+        "label": "link"
+      },
+      {
+        "type": "text",
+        "id": "age_verification_no_btn",
+        "label": "Button",
+        "default": "Button"
+      },
+      {
+        "type": "header",
+        "content": "Style"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_bg",
+        "label": "Background Color",
+        "default": "#BBB"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_link_color",
+        "label": "Link Color",
+        "default": "#BBB"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_title_color",
+        "label": "Title Color",
+        "default": "#BBB"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_body_color",
+        "label": "Body text Color",
+        "default": "#BBB"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_yes_btn_color",
+        "label": "Yes button Color",
+        "default": "#BBB"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_yes_btn_hover_color",
+        "label": "Yes button hover Color",
+        "default": "#BBB"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_no_btn_color",
+        "label": "No button Color",
+        "default": "#BBB"
+      },
+      {
+        "type": "color",
+        "id": "age_verification_no_btn_hover_color",
+        "label": "No button hover Color",
+        "default": "#BBB"
+      }
+    ]
+  },
