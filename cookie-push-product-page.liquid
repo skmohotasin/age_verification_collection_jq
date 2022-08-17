@@ -1,0 +1,4 @@
+{% assign agever = settings.checkout_page_cookie_collection %}
+{% if agever == collection.handle  %}
+{% render 'cookie-get' %}
+{% endif %}
