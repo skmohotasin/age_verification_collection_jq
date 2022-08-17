@@ -1,0 +1,13 @@
+{{ 'age-verification.scss.css' | asset_url  | stylesheet_tag }}
+<script>
+setTimeout(function(){
+  loadJS('{{ 'jquery.min.js' | asset_url }}');
+},1500);
+</script>
+<script>
+setTimeout(function(){
+  loadJS('{{ 'jquery.magnific-popup.min.js' | asset_url }}');
+  loadJS('{{ 'jquery.cookie.js' | asset_url }}');
+  loadJS('{{ 'age-verification.js' | asset_url }}');
+},2000);
+</script>
