@@ -1,0 +1,4 @@
+{% assign agever = collections[settings.age_verification_collection] %}
+{% if agever.id == collection.id  %}
+{% render 'ageverification_code' %}
+{% endif %}
