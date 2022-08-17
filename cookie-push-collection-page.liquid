@@ -1,0 +1,4 @@
+{% assign agever = collections[settings.checkout_page_cookie_collection] %}
+{% if agever.id == collection.id  %}
+{% render 'cookie-push' %}
+{% endif %}
