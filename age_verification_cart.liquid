@@ -1,0 +1,115 @@
+{{ 'age-verification-cart.scss.css' | asset_url  | stylesheet_tag }}
+<style>
+  .cart-age-varification,.cart-age-varification-title {
+    display: block;
+    float: left;
+    width: 100%;
+    margin-bottom: 15px;
+  }
+  .cart-age-varification input {
+    display: block;
+    float: left;
+    width: 15px;
+    height: 24px;
+  }
+  .cart-age-varification label {
+    float: left;
+    padding-left: 10px;
+    color: #eb1b2f;
+  }
+  .cart-age-varification-title .text {
+    float: left;
+    font-size: 1rem;
+    color: #eb1b2f;
+    font-weight: bold;
+  }
+</style>
+<script>
+setTimeout(function(){
+var modal_content,
+	modal_screen;
+  
+    $('.cart').on('click', '[name="checkout"]', function(e) {
+    if ($('#age-verification').is(':checked')) {
+      $(this).submit();
+    }
+    else {
+      loadJS('{{ 'jquery.magnific-popup.min.js' | asset_url }}');
+      av_showmodal();
+      e.preventDefault();
+    }
+  });
+ 
+  av_showmodal = function() {
+    modal_screen = $('<div id="modal_screen"></div>');
+    modal_content = $('<div id="modal_content" style="display:none"></div>');
+    var modal_content_wrapper = $('<div id="modal_content_wrapper" class="content_wrapper"></div>');
+    var modal_regret_wrapper = $('<div id="modal_regret_wrapper" class="content_wrapper" style="display:none;"></div>');
+
+    // Question Content
+    var content_heading = $('<h2>{{ 'cart.popup.title' | t }}</h2>');
+    var content_buttons = $('<nav><ul><li><input type="checkbox" id="age-verification-popup"><label>{{ 'cart.general.age_verification_text' | t }}</label></li><li><a href="" class="av_btn av_no" rel="no">{{ 'cart.popup.button_text' | t }}</a></li></ul></nav>');
+    var content_text = $('<p>{{ 'cart.popup.body' | t }}</p>');
+    var content_note = $('<p class="little">{{ 'cart.popup.note' | t }}</p>');
+
+    // Regret Content
+    var regret_heading = $('<h2>{{ 'cart.popup.title' | t }}</h2>');
+    var regret_buttons = $('<nav><ul><li><a href="/checkout" class="av_btn av_go" rel="yes"> {{ 'cart.general.checkout' | t }}</a></li></ul></nav>');
+    var regret_text = $('<p>{{ 'cart.popup.body' | t }}</p>');
+    var regret_note = $('<p class="little">{{ 'cart.popup.note' | t }}</p>');
+
+    modal_content_wrapper.append(content_heading, content_text, content_buttons, content_note);
+    modal_regret_wrapper.append(regret_heading, regret_text, regret_buttons, regret_note);
+    modal_content.append(modal_content_wrapper, modal_regret_wrapper);
+
+    // Append the prompt to the end of the document
+    $('body').append(modal_screen, modal_content);
+
+    // Center the box
+    av_positionPrompt();
+    
+    modal_content.find('a.av_btn').on('click', av_setCookie);
+    
+     $('#age-verification-popup').on('click', function() {
+       av_showRegret();
+     });
+  };
+  
+  av_setCookie = function(e) {
+  var is_legal = $(e.currentTarget).attr('rel');
+
+  if (is_legal == "no") {
+      av_closeModal();
+      $(window).off('resize');
+    } else {
+       $(this).unbind('submit').submit();
+       return true;
+    }
+  };
+  
+  av_closeModal = function() {
+    modal_content.fadeOut();
+    modal_screen.fadeOut();
+  };
+
+  av_showRegret = function() {
+    modal_screen.addClass('nope');
+    modal_content.find('#modal_content_wrapper').hide();
+    modal_content.find('#modal_regret_wrapper').show();
+  };
+  
+  av_positionPrompt = function() {
+    var top = ($(window).outerHeight() - $('#modal_content').outerHeight()) / 2;
+    var left = ($(window).outerWidth() - $('#modal_content').outerWidth()) / 2;
+    modal_content.css({
+      'top': top,
+      'left': left
+    });
+
+    if (modal_content.is(':hidden')) {
+      modal_content.fadeIn('slow')
+    }
+  };  
+  
+}, 1000);
+</script>
