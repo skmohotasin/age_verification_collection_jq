@@ -1,7 +1,6 @@
 #age-verification-modal #modal_content,
 #age-verification-modal .modal__inner {
    background-color: var(--ageVerificationBg);
-   text-align: center;
 }
 
 #age-verification-modal #modal_content .content_wrapper {
