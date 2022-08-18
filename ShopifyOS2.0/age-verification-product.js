@@ -193,7 +193,6 @@ function eraseCookie(name) {
 
 window.addEventListener('DOMContentLoaded', function() {
     var CookieValue = 'no',
-        CookieValueProducts = theme.ageVerification.products,
         YesButton = document.querySelector('.av_yes'),
         NoButton = document.querySelector('.av_no'),
         modalContentWrapper = document.querySelector('#modal_content_wrapper'),
@@ -207,7 +206,6 @@ window.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         CookieValue = 'yes';
         setCookie('is_adult', CookieValue, days);
-        setCookie('is_adult_products', CookieValueProducts, 1);
         modal.close();
     }, false);
 
