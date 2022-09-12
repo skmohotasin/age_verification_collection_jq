@@ -191,6 +191,18 @@ function eraseCookie(name) {
     document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
 
+function updateCookie(name, value, days) {
+    var getcookie = getCookie(name);
+    if (getcookie != null) {
+        getcookie += ',' + value.toString();
+        var uniquegetcookie = Array.from(new Set(getcookie.split(','))).toString();
+        setCookie(name, uniquegetcookie, days);
+    } else {
+        setCookie(name, value, days);
+    }
+    return null;
+}
+
 window.addEventListener('DOMContentLoaded', function() {
     var CookieValue = 'no',
         CookieValueProducts = theme.ageVerification.products,
@@ -207,7 +219,7 @@ window.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         CookieValue = 'yes';
         setCookie('is_adult', CookieValue, days);
-        setCookie('is_adult_products', CookieValueProducts, 1);
+        updateCookie('is_adult_products', CookieValueProducts, 1);
         modal.close();
     }, false);
 

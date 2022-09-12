@@ -191,8 +191,21 @@ function eraseCookie(name) {
     document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
 
+function updateCookie(name, value, days) {
+    var getcookie = getCookie(name);
+    if (getcookie != null) {
+        getcookie += ',' + value.toString();
+        var uniquegetcookie = Array.from(new Set(getcookie.split(','))).toString();
+        setCookie(name, uniquegetcookie, days);
+    } else {
+        setCookie(name, value, days);
+    }
+    return null;
+}
+
 window.addEventListener('DOMContentLoaded', function() {
     var CookieValue = 'no',
+        CookieValueProduct = theme.ageVerification.product,
         YesButton = document.querySelector('.av_yes'),
         NoButton = document.querySelector('.av_no'),
         modalContentWrapper = document.querySelector('#modal_content_wrapper'),
@@ -206,6 +219,7 @@ window.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         CookieValue = 'yes';
         setCookie('is_adult', CookieValue, days);
+        updateCookie('is_adult_products', CookieValueProduct, 1);
         modal.close();
     }, false);
 
